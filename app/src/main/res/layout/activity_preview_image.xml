@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context="com.refine.emoji.PreviewImageActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <ImageView
+                android:id="@+id/iv_preview_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:background="@drawable/ic_image_black_24dp"
+                android:maxHeight="360dp"
+                android:maxWidth="360dp"
+                android:minHeight="120dp"
+                android:minWidth="120dp"
+                android:scaleType="fitXY" />
+        </ScrollView>
+
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:maxLines="1" />
+
+        <Button
+            android:id="@+id/btn_upload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上传" />
+    </LinearLayout>
+</android.support.constraint.ConstraintLayout>
