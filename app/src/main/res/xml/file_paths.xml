@@ -4,5 +4,8 @@
         <cache-path
             name="share_path"
             path="image_manager_disk_cache" />
+        <external-path
+            name="ocr_path"
+            path="tessdata/" />
     </paths>
 </resources>

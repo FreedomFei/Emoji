@@ -18,7 +18,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:adjustViewBounds="true" />
+            android:adjustViewBounds="true"
+            android:minHeight="64dp"
+            android:minWidth="64dp" />
 
         <TextView
             android:id="@+id/tv_emoji_title"

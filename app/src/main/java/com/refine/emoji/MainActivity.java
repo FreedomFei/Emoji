@@ -11,6 +11,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.widget.ImageView;
@@ -30,21 +31,27 @@ import com.bumptech.glide.request.transition.Transition;
 import com.refine.emoji.base.BaseActivity;
 import com.refine.emoji.base.recyclerview.BaseRVAdapter;
 import com.refine.emoji.base.recyclerview.BaseViewHolder;
+import com.refine.emoji.util.FSearchTool;
 import com.refine.emoji.util.LogUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private final int PICK_IMAGE = 100;
 
     private RecyclerView recyclerView;
+    private SearchView searchView;
     private FloatingActionButton fab;
 
+    //private List<AVFile> avFiles;
     private EmojiAdapter homeMessageAdapter;
+    private FSearchTool<AVFile> fSearchTool;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +59,32 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recycler_view);
-        fab = findViewById(R.id.fab);
+        searchView = findViewById(R.id.search_view);
+        fab = findViewById(R.id.fab);//
+
+        /**
+         *搜索框默认是开启的，左侧搜索图标在搜索框外
+         *右侧一开始没有叉叉，有输入内容后出现叉叉，叉叉只能清除搜索框内容，无法关闭搜索框
+         */
+        searchView.setIconifiedByDefault(false);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (fSearchTool != null) {
+                    List<AVFile> avFiles = fSearchTool.searchTasks(newText);
+                    for (AVFile avObject : avFiles) {
+                        LogUtil.log.e("xxx", avObject.getName());
+                    }
+                    homeMessageAdapter.setData(avFiles);
+                }
+                return false;
+            }
+        });
 
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         recyclerView.setHasFixedSize(true);
@@ -111,7 +143,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         query.findInBackground(new FindCallback<AVObject>() {
             @Override
             public void done(List<AVObject> list, AVException e) {
-                List<AVFile> avFiles = new ArrayList<>();
                 if (e != null) {
                     toast(e.getMessage());
                 }
@@ -120,10 +151,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     return;
                 }
 
+                List<AVFile> avFiles = new ArrayList<>();
                 for (AVObject avObject : list) {
                     LogUtil.log.e("xxx", avObject.toString());
 
                     avFiles.add(AVFile.withAVObject(avObject));
+                }
+                try {
+                    fSearchTool = new FSearchTool<>(avFiles, "metaData");
+                } catch (Exception e1) {
+                    e1.printStackTrace();
                 }
 
                 homeMessageAdapter = new EmojiAdapter(MainActivity.this, avFiles);
@@ -179,7 +216,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private void send(AVFile avFile) {
         try {
-            GlideApp.with(MainActivity.this)
+            GlideApp.with(this)
                     .asFile()
                     .load(avFile.getUrl())
                     .into(new SimpleTarget<File>() {
@@ -256,12 +293,25 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     .into(ivEmoji);
 
             tvEmojiTitle.setText(nameFormat(avFile));
-            tvEmojiDescribe.setText(String.valueOf(avFile.getSize()));
+
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            //小数后最大一位
+            numberFormat.setMaximumFractionDigits(2);
+            //小数后最小一位
+            numberFormat.setMinimumFractionDigits(1);
+            String format = numberFormat.format(avFile.getSize() / 1024.00);
+            tvEmojiDescribe.setText(String.format(Locale.getDefault(), "%sKB", format));
+        }
+
+        public void setData(List<AVFile> avFiles) {
+            mList.clear();
+            mList.addAll(avFiles);
+            notifyDataSetChanged();
         }
     }
 
     private String nameFormat(AVFile avFile) {
         String fileName = String.valueOf(avFile.getMetaData("_name"));
-        return fileName.substring(fileName.lastIndexOf("."), fileName.length());
+        return fileName.substring(0, fileName.lastIndexOf("."));
     }
 }
