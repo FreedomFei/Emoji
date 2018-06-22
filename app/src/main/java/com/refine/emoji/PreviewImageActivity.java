@@ -11,47 +11,45 @@ import android.widget.ImageView;
 
 import com.avos.avoscloud.AVException;
 import com.avos.avoscloud.AVFile;
+import com.avos.avoscloud.GetFileCallback;
 import com.avos.avoscloud.ProgressCallback;
 import com.avos.avoscloud.SaveCallback;
 import com.bumptech.glide.request.target.Target;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.refine.emoji.base.BaseActivity;
+import com.refine.emoji.util.AssetsToStorageUtils;
 import com.refine.emoji.util.LogUtils;
 import com.refine.emoji.util.ThreadFactoryUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class PreviewImageActivity extends BaseActivity implements View.OnClickListener {
 
     private ImageView ivPreviewImage;
     private EditText etName;
 
-    private Intent intent;
+    private Intent mIntent;
     private UploadPregressDialog mUploadPregressDialog;
 
     /**
      * 修改、预览
      */
-    private String id;
-    private String name;
-    private String url;
+    private String mId;
+    private String mName;
+    private String mUrl;
 
 
     /**
      * 添加
      * 真实路径
      */
-    private String realPath;
+    private String mRealPath;
 
     /**
      * 添加
      * 后缀名
      */
-    private String nameSuffix;
+    private String mNameSuffix;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,83 +67,30 @@ public class PreviewImageActivity extends BaseActivity implements View.OnClickLi
         findViewById(R.id.btn_automatic_identification).setOnClickListener(this);
     }
 
-
     private void initData() {
-        intent = getIntent();
-        if (intent.getData() == null) {
+        mIntent = getIntent();
+        if (mIntent.getData() == null) {
             //预览
-            id = intent.getStringExtra("id");
-            name = intent.getStringExtra("name");
-            url = intent.getStringExtra("url");
+            mId = mIntent.getStringExtra("id");
+            mName = mIntent.getStringExtra("name");
+            mUrl = mIntent.getStringExtra("url");
 
-            etName.setText(String.valueOf(name));
-            GlideApp.with(this).load(url).override(Target.SIZE_ORIGINAL).into(ivPreviewImage);
-
-            try {
-                AVFile avFile = AVFile.withObjectId(id);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            etName.setText(String.valueOf(mName));
+            etName.setSelection(mName.length());
+            GlideApp.with(this).load(mUrl).override(Target.SIZE_ORIGINAL).into(ivPreviewImage);
         } else {
             //添加
-            realPath = RealPathUtil.getRealPath(this, intent.getData());
-            int index = realPath.lastIndexOf(".");
-            name = realPath.substring(0, index);
-            nameSuffix = realPath.substring(index, realPath.length());
+            mRealPath = RealPathUtil.getRealPath(this, mIntent.getData());
+            int index = mRealPath.lastIndexOf(".");
+            mName = mRealPath.substring(0, index);
+            mNameSuffix = mRealPath.substring(index, mRealPath.length());
 
             //Bitmap bitmap = data.getExtras().getParcelable("data");
             //MediaType.parse(getContentResolver().getType(tempUri))
-            GlideApp.with(this).load(intent.getData()).override(Target.SIZE_ORIGINAL).into(ivPreviewImage);
+            GlideApp.with(this).load(mIntent.getData()).override(Target.SIZE_ORIGINAL).into(ivPreviewImage);
 
-            assetsToStorage(dirPath + File.separator + language, language);
-        }
-    }
-
-    String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "tessdata";
-    String language = "chi_sim.traineddata";
-
-    public void assetsToStorage(String path, String name) {
-        //boolean mkdirs = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "tessdata")
-        //        .mkdirs();
-
-        File file1 = new File(path);
-        if (!file1.exists()) {
-            File p = file1.getParentFile();
-            if (!p.isDirectory()) {
-                p.mkdirs();
-            }
-            try {
-                file1.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        try {
-            inputStream = getAssets().open(language);
-            File file = new File(path);
-            outputStream = new FileOutputStream(file);
-            byte[] bytes = new byte[2048];
-            int len = 0;
-            while ((len = inputStream.read(bytes)) != -1) {
-                outputStream.write(bytes, 0, len);
-            }
-            outputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "tessdata";
+            new AssetsToStorageUtils(this).assetsToStorage(dirPath, AssetsToStorageUtils.LANGUAGE_CHI_SIM);
         }
     }
 
@@ -156,13 +101,23 @@ public class PreviewImageActivity extends BaseActivity implements View.OnClickLi
                 automaticIdentification();
                 break;
             case R.id.btn_upload:
-                uploadFile();
+                mUploadPregressDialog = new UploadPregressDialog(this);
+                mUploadPregressDialog.show();
+
+                if (mIntent.getData() == null) {
+                    updateFileName();
+                } else {
+                    uploadNewFile();
+                }
                 break;
             default:
                 break;
         }
     }
 
+    /**
+     * 自动识别
+     */
     private void automaticIdentification() {
         ThreadFactoryUtils factoryUtils = new ThreadFactoryUtils(1);
         factoryUtils.newThread(new Runnable() {
@@ -170,7 +125,7 @@ public class PreviewImageActivity extends BaseActivity implements View.OnClickLi
             public void run() {
                 TessBaseAPI tessBaseAPI = new TessBaseAPI();
                 tessBaseAPI.init(Environment.getExternalStorageDirectory().getAbsolutePath(), "chi_sim");
-                tessBaseAPI.setImage(BitmapFactory.decodeFile(realPath));
+                tessBaseAPI.setImage(BitmapFactory.decodeFile(mRealPath));
                 final String text = tessBaseAPI.getUTF8Text();
                 tessBaseAPI.end();
                 runOnUiThread(new Runnable() {
@@ -184,35 +139,62 @@ public class PreviewImageActivity extends BaseActivity implements View.OnClickLi
         }).start();
     }
 
-    private void uploadFile() {
+    /**
+     * 上传新文件
+     */
+    private void uploadNewFile() {
         String name = etName.getText().toString();
         if (TextUtils.isEmpty(name)) {
             toast("null!");
             return;
         }
         try {
-            mUploadPregressDialog = new UploadPregressDialog(this);
-            mUploadPregressDialog.show();
-            AVFile avFile = AVFile.withAbsoluteLocalPath(name + nameSuffix
-                    , realPath);
-            avFile.saveInBackground(new SaveCallback() {
+            AVFile avFile = AVFile.withAbsoluteLocalPath(name + mNameSuffix
+                    , mRealPath);
+            uploadInBackground(avFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 修改文件名
+     */
+    private void updateFileName() {
+        final String name = etName.getText().toString();
+        if (TextUtils.isEmpty(name)) {
+            toast("null!");
+            return;
+        }
+        try {
+            AVFile.withObjectIdInBackground(mId, new GetFileCallback<AVFile>() {
                 @Override
-                public void done(AVException e) {
-                    // 成功或失败处理
-                    toast("success!");
-                    finish();
-                }
-            }, new ProgressCallback() {
-                @Override
-                public void done(Integer integer) {
-                    LogUtils.e(String.valueOf(integer));
-                    // 上传进度数据，integer 介于 0 和 100。
-                    mUploadPregressDialog.setProgress(integer);
+                public void done(AVFile avFile, AVException e) {
+                    avFile.getMetaData().put("_name", name);
+                    uploadInBackground(avFile);
                 }
             });
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void uploadInBackground(AVFile avFile) {
+        avFile.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(AVException e) {
+                // 成功或失败处理
+                toast("success!");
+                finish();
+            }
+        }, new ProgressCallback() {
+            @Override
+            public void done(Integer integer) {
+                LogUtils.e(String.valueOf(integer));
+                // 上传进度数据，integer 介于 0 和 100。
+                mUploadPregressDialog.setProgress(integer);
+            }
+        });
     }
 
     @Override
