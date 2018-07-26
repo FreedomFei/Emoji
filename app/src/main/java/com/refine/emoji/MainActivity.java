@@ -78,7 +78,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 if (fSearchTool != null) {
                     List<AVFile> avFiles = fSearchTool.searchTasks(newText);
                     for (AVFile avObject : avFiles) {
-                        LogUtil.log.e("xxx", avObject.getName());
+                        LogUtil.log.e("xxxxx", avObject.getName());
                     }
                     homeMessageAdapter.setData(avFiles);
                 }
@@ -140,6 +140,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         query.setCachePolicy(AVQuery.CachePolicy.NETWORK_ELSE_CACHE);
         //设置为一天，单位毫秒
         query.setMaxCacheAge(24 * 3600 * 1000);
+        query.limit(1000);
+        //query.skip();
         query.findInBackground(new FindCallback<AVObject>() {
             @Override
             public void done(List<AVObject> list, AVException e) {
@@ -152,8 +154,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
 
                 List<AVFile> avFiles = new ArrayList<>();
+                LogUtil.log.e("size:" + list.size());
                 for (AVObject avObject : list) {
-                    LogUtil.log.e("xxx", avObject.toString());
+                    //LogUtil.log.e(avObject.toString());
 
                     avFiles.add(AVFile.withAVObject(avObject));
                 }
@@ -197,7 +200,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             }
         });
         //负
-        builder.setNegativeButton("编辑", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("预览", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String objectId = avFile.getObjectId();
@@ -229,7 +232,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                             shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
                             shareIntent.setType("image/*");
                             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            startActivity(Intent.createChooser(shareIntent, "tt"));
+                            startActivity(Intent.createChooser(shareIntent, null));
                         }
                     });
         } catch (Exception e1) {
@@ -256,7 +259,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE) {
-            data.setClass(this, PreviewImageActivity.class);
+            data.setClass(this, UploadImageActivity.class);
             startActivity(data);
         }
     }

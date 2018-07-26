@@ -31,7 +31,7 @@ public class FSearchTool<T> {
                 Object info = mSearchObjs.get(i);
                 // 指定要搜索的字段
                 String searchKey = getSearchKey(info, fields);
-                LogUtils.e("xxx", searchKey);
+                //LogUtils.e(searchKey);
 
                 // 将该字符串在总字符串中的起终位置保存下来,位置是索引值而非长度
                 int length = mKeyWordString.length();

@@ -32,17 +32,24 @@
                 android:scaleType="fitXY" />
         </ScrollView>
 
-        <TextView
-            android:id="@+id/tv_name"
+        <EditText
+            android:id="@+id/et_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:gravity="center" />
+            android:lines="3"
+            android:maxLines="1" />
 
         <Button
-            android:id="@+id/btn_download"
+            android:id="@+id/btn_automatic_identification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="下载" />
+            android:text="自动识别" />
+
+        <Button
+            android:id="@+id/btn_upload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上传" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>
