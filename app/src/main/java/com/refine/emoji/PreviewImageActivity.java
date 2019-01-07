@@ -2,6 +2,7 @@ package com.refine.emoji;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
@@ -14,6 +15,7 @@ import com.avos.avoscloud.ProgressCallback;
 import com.bumptech.glide.request.target.Target;
 import com.refine.emoji.base.BaseActivity;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -85,10 +87,15 @@ public class PreviewImageActivity extends BaseActivity implements View.OnClickLi
         avFile.getDataInBackground(new GetDataCallback() {
             @Override
             public void done(byte[] bytes, AVException e) {
+                File downloadCacheDirectory = Environment.getDownloadCacheDirectory();
+
+                //String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "test";
+
                 // bytes 就是文件的数据流
                 FileOutputStream outputStream = null;
                 try {
-                    outputStream = new FileOutputStream("");
+                    outputStream = new FileOutputStream(
+                            downloadCacheDirectory + File.separator + name);
                     outputStream.write(bytes);
                 } catch (Exception e1) {
                     e1.printStackTrace();

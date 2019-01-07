@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ShareCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -50,6 +49,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private SearchView searchView;
     private FloatingActionButton fab;
 
+    //private List<AVFile> avFiles;
     private EmojiAdapter homeMessageAdapter;
     private FSearchTool<AVFile> fSearchTool;
 
@@ -203,15 +203,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         builder.setNegativeButton("预览", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String objectId = avFile.getObjectId();
-                String name = nameFormat(avFile);
-                String url = avFile.getUrl();
-
-                Intent intent = new Intent(MainActivity.this, PreviewImageActivity.class);
-                intent.putExtra("id", objectId);
-                intent.putExtra("name", name);
-                intent.putExtra("url", url);
-                startActivity(intent);
+                toPreview(avFile);
             }
         });
         builder.create().show();
@@ -227,20 +219,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         public void onResourceReady(@NonNull File resource, @Nullable Transition<? super File> transition) {
                             Uri uri = FileProvider.getUriForFile(MainActivity.this, "com.refine.emoji.fileprovider", resource);
 
-                            //Intent shareIntent = new Intent();
-                            //shareIntent.setAction(Intent.ACTION_SEND);
-                            //shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                            //shareIntent.setType("image/*");
-
-                            Intent shareIntent = ShareCompat.IntentBuilder
-                                    .from(MainActivity.this)
-                                    .setType("image/*")
-                                    .setStream(uri)
-                                    .getIntent();
-
-                            //临时访问读权限 intent的接受者将被授予 INTENT 数据uri 或者 在ClipData 上的读权限。
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                            shareIntent.setType("image/*");
                             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            startActivity(Intent.createChooser(shareIntent, "biubiubiu"));
+                            startActivity(Intent.createChooser(shareIntent, null));
                         }
                     });
         } catch (Exception e1) {
@@ -260,6 +244,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
             }
         });
+    }
+
+    private void toPreview(AVFile avFile) {
+        String objectId = avFile.getObjectId();
+        String name = nameFormat(avFile);
+        String url = avFile.getUrl();
+
+        Intent intent = new Intent(MainActivity.this, PreviewImageActivity.class);
+        intent.putExtra("id", objectId);
+        intent.putExtra("name", name);
+        intent.putExtra("url", url);
+        startActivity(intent);
     }
 
     @Override
